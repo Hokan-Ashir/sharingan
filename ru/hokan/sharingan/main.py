@@ -1,5 +1,5 @@
-from ru.hokan.sharingan.crawler import crawler
+from ru.hokan.sharingan.crawler import Crawler
 
 if __name__ == '__main__':
-    image_crawler = crawler()
+    image_crawler = Crawler()
     image_crawler.get_pictures(100)
