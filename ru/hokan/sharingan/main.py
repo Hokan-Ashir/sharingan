@@ -4,7 +4,7 @@ from ru.hokan.sharingan.crawlers.ImgurCrawler import ImgurCrawler
 from ru.hokan.sharingan.crawlers.PrntScrCrawler import PrntScrCrawler
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     number_of_pictures_to_find = 100
 
     prt_scr_crawler = PrntScrCrawler()

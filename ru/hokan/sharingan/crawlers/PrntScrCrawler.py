@@ -20,7 +20,9 @@ class PrntScrCrawler(Crawler):
 
     def _should_image_be_processed(self, full_image_url):
         try:
-            urllib2.urlopen(full_image_url)
+            req = urllib2.Request(full_image_url, None, {
+                'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'})
+            urllib2.urlopen(req)
         except urllib2.HTTPError as e:
             logging.debug('Failed to filter url: ' + full_image_url + ' reason: ' + str(e.getcode()))
             return False
