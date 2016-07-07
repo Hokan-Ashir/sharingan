@@ -1,9 +1,10 @@
+import logging
 import os
 import random
 import string
 import urllib2
 
-from ru.hokan.sharingan.crawler import Crawler
+from ru.hokan.sharingan.common.crawler import Crawler
 
 
 class PrntScrCrawler(Crawler):
@@ -20,8 +21,8 @@ class PrntScrCrawler(Crawler):
     def _should_image_be_processed(self, full_image_url):
         try:
             urllib2.urlopen(full_image_url)
-        except urllib2.HTTPError:
-            # TODO add logging or some other notification
+        except urllib2.HTTPError as e:
+            logging.debug('Failed to filter url: ' + full_image_url + ' reason: ' + str(e.getcode()))
             return False
 
         return True

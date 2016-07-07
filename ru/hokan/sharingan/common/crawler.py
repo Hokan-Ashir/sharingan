@@ -1,3 +1,4 @@
+import logging
 import os
 from StringIO import StringIO
 from abc import abstractmethod, ABCMeta
@@ -32,8 +33,10 @@ class Crawler:
         for x in xrange(0, number_of_pictures):
             image_name = self._get_random_image_name() + self.__IMAGE_EXTENSION
             full_image_url = self.__target_url + image_name
+            logging.debug('Trying to process url: ' + full_image_url)
             if not self._should_image_be_processed(full_image_url):
                 continue
+            logging.debug('Filtering passed for url: ' + full_image_url)
 
             response = requests.get(full_image_url)
             img = Image.open(StringIO(response.content))
