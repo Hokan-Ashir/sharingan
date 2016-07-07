@@ -1,5 +1,4 @@
 import os
-import urllib2
 from StringIO import StringIO
 from abc import abstractmethod, ABCMeta
 from multiprocessing.dummy import Pool as ThreadPool
@@ -15,7 +14,6 @@ class Crawler:
     __target_url = ''
     __IMAGE_EXTENSION = '.png'
     __NUMBER_OF_THREADS = 10
-    __REMOVED_IMAGE_URL = 'http://i.imgur.com/removed.png'
 
     def __init__(self, target_url, output_directory):
         self.__target_url = target_url
@@ -26,17 +24,15 @@ class Crawler:
     def _get_random_image_name(self):
         pass
 
+    @abstractmethod
+    def _should_image_be_processed(self, full_image_url):
+        return True
+
     def __get_pictures_separate_thread(self, number_of_pictures):
         for x in xrange(0, number_of_pictures):
             image_name = self._get_random_image_name() + self.__IMAGE_EXTENSION
             full_image_url = self.__target_url + image_name
-            try:
-                img_data = urllib2.urlopen(full_image_url)
-                if [img_data.url == self.__REMOVED_IMAGE_URL]:
-                    # TODO add logging or some other notification
-                    continue
-            except urllib2.HTTPError:
-                # TODO add logging or some other notification
+            if not self._should_image_be_processed(full_image_url):
                 continue
 
             response = requests.get(full_image_url)
