@@ -13,7 +13,7 @@ class Crawler:
 
     __output_directory = ''
     __target_url = ''
-    __IMAGE_EXTENSION = '.png'
+    __image_extensions = ['.jpg', '.png']
     __NUMBER_OF_THREADS = 10
 
     def __init__(self, target_url, output_directory):
@@ -31,16 +31,23 @@ class Crawler:
 
     def __get_pictures_separate_thread(self, number_of_pictures):
         for x in xrange(0, number_of_pictures):
-            image_name = self._get_random_image_name() + self.__IMAGE_EXTENSION
-            full_image_url = self.__target_url + image_name
-            logging.debug('Trying to process url: ' + full_image_url)
-            if not self._should_image_be_processed(full_image_url):
-                continue
-            logging.debug('Filtering passed for url: ' + full_image_url)
+            for extension in self.__image_extensions:
+                if self.__try_to_download_picture(extension):
+                    break
 
-            response = requests.get(full_image_url)
-            img = Image.open(StringIO(response.content))
-            img.save(self.__output_directory + image_name)
+    def __try_to_download_picture(self, file_extension):
+        image_name = self._get_random_image_name() + file_extension
+        full_image_url = self.__target_url + image_name
+        logging.debug('Trying to process url: ' + full_image_url)
+        if not self._should_image_be_processed(full_image_url):
+            return False
+        logging.debug('Filtering passed for url: ' + full_image_url)
+
+        response = requests.get(full_image_url)
+        img = Image.open(StringIO(response.content))
+        img.save(self.__output_directory + image_name)
+
+        return True
 
     def get_pictures(self, number_of_pictures):
         if not os.path.exists(self.__output_directory):
