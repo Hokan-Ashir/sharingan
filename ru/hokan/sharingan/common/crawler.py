@@ -4,6 +4,7 @@ import urllib2
 from StringIO import StringIO
 from abc import abstractmethod, ABCMeta
 from multiprocessing.dummy import Pool as ThreadPool
+from string import lower
 
 import requests
 from PIL import Image
@@ -54,8 +55,11 @@ class Crawler:
                 return
 
             image_name = str(image_target_url).rsplit('/', 1)[1]
+            image_file_path = self.__output_directory + image_name
+            if [image_file_path[-len(img.format):] != lower(img.format)]:
+                image_file_path += '.' + lower(img.format)
             try:
-                img.save(self.__output_directory + image_name)
+                img.save(image_file_path)
             except KeyError as e:
                 logging.debug('Can\'t save image from url: ' + full_image_url + ' reason: ' + str(e.message))
 
