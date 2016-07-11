@@ -9,6 +9,8 @@ from string import lower
 import requests
 from PIL import Image
 from lxml.html import document_fromstring
+from pytesseract import image_to_string
+from pytesseract.pytesseract import TesseractError
 
 
 class Crawler:
@@ -63,10 +65,19 @@ class Crawler:
             except KeyError as e:
                 logging.debug('Can\'t save image from url: ' + full_image_url + ' reason: ' + str(e.message))
 
+            try:
+                img = Image.open(image_file_path)
+                text = image_to_string(img)
+                logging.info('Extracted text: \'' + text + '\' from image url: ' + full_image_url)
+            except TesseractError as e:
+                logging.debug(
+                    'Can\'t extract text from image from url: ' + full_image_url + ' reason: ' + str(e.message))
+
         except urllib2.HTTPError as e:
             logging.debug('Failed to filter url: ' + full_image_url + ' reason: ' + str(e.getcode()))
 
     def get_pictures(self, number_of_pictures):
+        # pytesseract.tesseract_cmd = 'C:/Program Files (x86)/Tesseract-ORC/tesseract'
         if not os.path.exists(self.__output_directory):
             os.makedirs(self.__output_directory)
 
