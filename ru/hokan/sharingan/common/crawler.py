@@ -1,11 +1,13 @@
 import logging
 import os
+import urllib2
 from StringIO import StringIO
 from abc import abstractmethod, ABCMeta
 from multiprocessing.dummy import Pool as ThreadPool
 
 import requests
 from PIL import Image
+from lxml.html import document_fromstring
 
 
 class Crawler:
@@ -13,7 +15,6 @@ class Crawler:
 
     __output_directory = ''
     __target_url = ''
-    __image_extensions = ['.jpg', '.png']
     __NUMBER_OF_THREADS = 10
 
     def __init__(self, target_url, output_directory):
@@ -22,32 +23,44 @@ class Crawler:
         pass
 
     @abstractmethod
-    def _get_random_image_name(self):
+    def _get_random_url_name(self):
         pass
-
-    @abstractmethod
-    def _should_image_be_processed(self, full_image_url):
-        return True
 
     def __get_pictures_separate_thread(self, number_of_pictures):
         for x in xrange(0, number_of_pictures):
-            for extension in self.__image_extensions:
-                if self.__try_to_download_picture(extension):
-                    break
+            self.__try_to_download_picture()
 
-    def __try_to_download_picture(self, file_extension):
-        image_name = self._get_random_image_name() + file_extension
-        full_image_url = self.__target_url + image_name
+    def __try_to_download_picture(self):
+        url_name = self._get_random_url_name()
+        full_image_url = self.__target_url + url_name
         logging.debug('Trying to process url: ' + full_image_url)
-        if not self._should_image_be_processed(full_image_url):
-            return False
-        logging.debug('Filtering passed for url: ' + full_image_url)
+        try:
+            req = urllib2.Request(full_image_url, None, {
+                'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'})
+            url_data = urllib2.urlopen(req)
+            data = url_data.read()
+            url_data.close()
+            document = document_fromstring(data)
+            image_target_url = document.xpath('//img[contains(@class, \'image__pic js-image-pic\')]/@src')[0]
+            if not image_target_url:
+                logging.debug('No image exists in url: ' + full_image_url)
+                return
 
-        response = requests.get(full_image_url)
-        img = Image.open(StringIO(response.content))
-        img.save(self.__output_directory + image_name)
+            response = requests.get(image_target_url)
+            try:
+                img = Image.open(StringIO(response.content))
+            except Exception as e:
+                logging.debug('No image exists in url: ' + full_image_url + ' reason: ' + str(e.message))
+                return
 
-        return True
+            image_name = str(image_target_url).rsplit('/', 1)[1]
+            try:
+                img.save(self.__output_directory + image_name)
+            except KeyError as e:
+                logging.debug('Can\'t save image from url: ' + full_image_url + ' reason: ' + str(e.message))
+
+        except urllib2.HTTPError as e:
+            logging.debug('Failed to filter url: ' + full_image_url + ' reason: ' + str(e.getcode()))
 
     def get_pictures(self, number_of_pictures):
         if not os.path.exists(self.__output_directory):
