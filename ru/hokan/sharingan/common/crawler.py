@@ -16,18 +16,24 @@ from pytesseract.pytesseract import TesseractError
 class Crawler:
     __metaclass__ = ABCMeta
 
+    __should_extract_text = False
     __output_directory = ''
     __target_url = ''
     __NUMBER_OF_THREADS = 10
 
-    def __init__(self, target_url, output_directory):
+    def __init__(self, target_url, output_directory, should_extract_text):
         self.__target_url = target_url
         self.__output_directory = output_directory
+        self.__should_extract_text = should_extract_text
         pass
 
     @abstractmethod
     def _get_random_url_name(self):
         pass
+
+    @abstractmethod
+    def _should_image_be_processed(self, image):
+        return True
 
     def __get_pictures_separate_thread(self, number_of_pictures):
         for x in xrange(0, number_of_pictures):
@@ -56,14 +62,20 @@ class Crawler:
                 logging.debug('No image exists in url: ' + full_image_url + ' reason: ' + str(e.message))
                 return
 
+            if not self._should_image_be_processed(img):
+                return
+
             image_name = str(image_target_url).rsplit('/', 1)[1]
             image_file_path = self.__output_directory + image_name
-            if [image_file_path[-len(img.format):] != lower(img.format)]:
+            if image_file_path[-len(img.format):] != lower(img.format):
                 image_file_path += '.' + lower(img.format)
             try:
                 img.save(image_file_path)
             except KeyError as e:
                 logging.debug('Can\'t save image from url: ' + full_image_url + ' reason: ' + str(e.message))
+
+            if not self.__should_extract_text:
+                return
 
             try:
                 img = Image.open(image_file_path)
@@ -77,10 +89,14 @@ class Crawler:
             logging.debug('Failed to filter url: ' + full_image_url + ' reason: ' + str(e.getcode()))
 
     def get_pictures(self, number_of_pictures):
-        # pytesseract.tesseract_cmd = 'C:/Program Files (x86)/Tesseract-ORC/tesseract'
         if not os.path.exists(self.__output_directory):
             os.makedirs(self.__output_directory)
 
-        pictures_per_thread = number_of_pictures / self.__NUMBER_OF_THREADS
-        pool = ThreadPool(self.__NUMBER_OF_THREADS)
-        pool.map(self.__get_pictures_separate_thread, [pictures_per_thread] * self.__NUMBER_OF_THREADS)
+        if [number_of_pictures < self.__NUMBER_OF_THREADS]:
+            pictures_per_thread = number_of_pictures
+            number_of_threads = 1
+        else:
+            pictures_per_thread = number_of_pictures / self.__NUMBER_OF_THREADS
+            number_of_threads = self.__NUMBER_OF_THREADS
+        pool = ThreadPool(number_of_threads)
+        pool.map(self.__get_pictures_separate_thread, [pictures_per_thread] * number_of_threads)
