@@ -50,7 +50,12 @@ class Crawler:
             data = url_data.read()
             url_data.close()
             document = document_fromstring(data)
-            image_target_url = document.xpath('//img[contains(@class, \'image__pic js-image-pic\')]/@src')[0]
+            image_url_src_attribute_list = document.xpath('//img[contains(@class, \'image__pic js-image-pic\')]/@src')
+            if not image_url_src_attribute_list:
+                logging.debug('No image exists in url: ' + full_image_url)
+                return
+
+            image_target_url = image_url_src_attribute_list[0]
             if not image_target_url:
                 logging.debug('No image exists in url: ' + full_image_url)
                 return
@@ -92,11 +97,11 @@ class Crawler:
         if not os.path.exists(self.__output_directory):
             os.makedirs(self.__output_directory)
 
-        if [number_of_pictures < self.__NUMBER_OF_THREADS]:
-            pictures_per_thread = number_of_pictures
-            number_of_threads = 1
+        threads = self.__NUMBER_OF_THREADS
+        if number_of_pictures < threads:
+            self.__get_pictures_separate_thread(number_of_pictures)
         else:
-            pictures_per_thread = number_of_pictures / self.__NUMBER_OF_THREADS
-            number_of_threads = self.__NUMBER_OF_THREADS
-        pool = ThreadPool(number_of_threads)
-        pool.map(self.__get_pictures_separate_thread, [pictures_per_thread] * number_of_threads)
+            pictures_per_thread = number_of_pictures / threads
+            number_of_threads = threads
+            pool = ThreadPool(number_of_threads)
+            pool.map(self.__get_pictures_separate_thread, [pictures_per_thread] * number_of_threads)

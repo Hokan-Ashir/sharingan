@@ -3,7 +3,7 @@ import random
 import string
 
 from ru.hokan.sharingan.common.Configuration import Configuration
-from ru.hokan.sharingan.common.Crawler import Crawler
+from ru.hokan.sharingan.common.crawler import Crawler
 
 
 class ImgurCrawler(Crawler):
@@ -11,8 +11,8 @@ class ImgurCrawler(Crawler):
     __OUTPUT_DIRECTORY = '.' + os.path.sep + 'output_imgur' + os.path.sep
     __TARGET_URL = 'http://prntscr.com/'
 
-    def __init__(self):
-        Crawler.__init__(self, self.__TARGET_URL, self.__OUTPUT_DIRECTORY)
+    def __init__(self, should_text_be_extracted):
+        Crawler.__init__(self, self.__TARGET_URL, self.__OUTPUT_DIRECTORY, should_text_be_extracted)
 
     def _get_random_url_name(self):
         return ''.join(random.choice(string.lowercase + string.digits) for i in range(self.__IMAGE_NAME_LENGTH))

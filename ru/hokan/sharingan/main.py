@@ -12,29 +12,29 @@ DEFAULT_NUMBER_OF_THREADS = 10
 def create_configuration(parsed_options):
     configuration = Configuration()
     if parsed_options.number_of_images is not None:
-        configuration.set_number_of_images(parsed_options.number_of_images)
+        configuration.set_number_of_images(int(parsed_options.number_of_images))
     else:
         configuration.set_number_of_images(DEFAULT_NUMBER_OF_IMAGES)
 
     if parsed_options.number_of_threads is not None:
-        configuration.set_number_of_threads(parsed_options.number_of_threads)
+        configuration.set_number_of_threads(int(parsed_options.number_of_threads))
     else:
         configuration.set_number_of_threads(DEFAULT_NUMBER_OF_THREADS)
 
     if parsed_options.min_width is not None:
-        configuration.set_min_width(parsed_options.min_width)
+        configuration.set_min_width(int(parsed_options.min_width))
 
     if parsed_options.max_width is not None:
-        configuration.set_min_width(parsed_options.max_width)
+        configuration.set_min_width(int(parsed_options.max_width))
 
     if parsed_options.min_height is not None:
-        configuration.set_min_width(parsed_options.min_height)
+        configuration.set_min_width(int(parsed_options.min_height))
 
     if parsed_options.max_height is not None:
-        configuration.set_min_width(parsed_options.max_height)
+        configuration.set_min_width(int(parsed_options.max_height))
 
     if parsed_options.should_text_be_extracted is not None:
-        configuration.set_min_width(parsed_options.should_text_be_extracted)
+        configuration.set_should_text_be_extracted(parsed_options.should_text_be_extracted)
     else:
         configuration.set_should_text_be_extracted(DEFAULT_TEXT_EXTRACTION_POLICY)
 
@@ -63,5 +63,5 @@ if __name__ == '__main__':
     create_configuration(options)
 
     configuration = Configuration()
-    imgur_crawler = ImgurCrawler()
+    imgur_crawler = ImgurCrawler(configuration.should_text_be_extracted())
     imgur_crawler.get_pictures(configuration.get_number_of_images())
