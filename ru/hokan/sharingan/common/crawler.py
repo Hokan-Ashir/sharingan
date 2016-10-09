@@ -49,13 +49,7 @@ class Crawler:
             url_data = urllib2.urlopen(req)
             data = url_data.read()
             url_data.close()
-            document = document_fromstring(data)
-            image_url_src_attribute_list = document.xpath('//img[contains(@class, \'image__pic js-image-pic\')]/@src')
-            if not image_url_src_attribute_list:
-                logging.debug('No image exists in url: ' + full_image_url)
-                return
-
-            image_target_url = image_url_src_attribute_list[0]
+            image_target_url = str(data).split("ifr.registerMainWindow(")[1].split(",")[0].replace("\"", "")
             if not image_target_url:
                 logging.debug('No image exists in url: ' + full_image_url)
                 return
