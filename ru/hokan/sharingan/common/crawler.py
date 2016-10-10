@@ -1,6 +1,7 @@
 import logging
 import os
 import urllib2
+import uuid
 from StringIO import StringIO
 from abc import abstractmethod, ABCMeta
 from multiprocessing.dummy import Pool as ThreadPool
@@ -8,9 +9,10 @@ from string import lower
 
 import requests
 from PIL import Image
-from lxml.html import document_fromstring
 from pytesseract import image_to_string
 from pytesseract.pytesseract import TesseractError
+
+from ru.hokan.sharingan.common.Configuration import Configuration
 
 
 class Crawler:
@@ -31,9 +33,21 @@ class Crawler:
     def _get_random_url_name(self):
         pass
 
-    @abstractmethod
-    def _should_image_be_processed(self, image):
-        return True
+    def __should_image_be_processed(self, image):
+        width, height = image.size
+
+        configuration = Configuration()
+        min_width = configuration.get_min_width()
+        max_width = configuration.get_max_width()
+        min_height = configuration.get_min_height()
+        max_height = configuration.get_max_height()
+
+        min_width_passed = True if min_width is None else height >= min_width
+        max_width_passed = True if max_width is None else width <= max_width
+        min_height_passed = True if min_height is None else height >= min_height
+        max_height_passed = True if max_height is None else height <= max_height
+
+        return min_width_passed and max_width_passed and min_height_passed and max_height_passed
 
     def __get_pictures_separate_thread(self, number_of_pictures):
         for x in xrange(0, number_of_pictures):
@@ -47,9 +61,8 @@ class Crawler:
             req = urllib2.Request(full_image_url, None, {
                 'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'})
             url_data = urllib2.urlopen(req)
-            data = url_data.read()
-            url_data.close()
-            image_target_url = str(data).split("ifr.registerMainWindow(")[1].split(",")[0].replace("\"", "")
+
+            image_target_url = self._get_image_url_from_source(url_data)
             if not image_target_url:
                 logging.debug('No image exists in url: ' + full_image_url)
                 return
@@ -61,11 +74,10 @@ class Crawler:
                 logging.debug('No image exists in url: ' + full_image_url + ' reason: ' + str(e.message))
                 return
 
-            if not self._should_image_be_processed(img):
+            if not self.__should_image_be_processed(img):
                 return
 
-            image_name = str(image_target_url).rsplit('/', 1)[1]
-            image_file_path = self.__output_directory + image_name
+            image_file_path = self.__output_directory + str(uuid.uuid4())
             if image_file_path[-len(img.format):] != lower(img.format):
                 image_file_path += '.' + lower(img.format)
             try:
@@ -86,6 +98,10 @@ class Crawler:
 
         except urllib2.HTTPError as e:
             logging.debug('Failed to filter url: ' + full_image_url + ' reason: ' + str(e.getcode()))
+
+    @abstractmethod
+    def _get_image_url_from_source(self, data):
+        pass
 
     def get_pictures(self, number_of_pictures):
         if not os.path.exists(self.__output_directory):

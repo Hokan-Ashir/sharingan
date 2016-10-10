@@ -2,7 +2,8 @@ import logging
 from optparse import OptionParser
 
 from ru.hokan.sharingan.common.Configuration import Configuration
-from ru.hokan.sharingan.crawlers.ImgurCrawler import ImgurCrawler
+from ru.hokan.sharingan.crawlers.MySharedCrawler import MySharedScrCrawler
+from ru.hokan.sharingan.crawlers.PrntScrCrawler import PrntScrCrawler
 
 DEFAULT_NUMBER_OF_IMAGES = 3
 DEFAULT_TEXT_EXTRACTION_POLICY = False
@@ -63,5 +64,7 @@ if __name__ == '__main__':
     create_configuration(options)
 
     configuration = Configuration()
-    imgur_crawler = ImgurCrawler(configuration.should_text_be_extracted())
+    imgur_crawler = PrntScrCrawler(configuration.should_text_be_extracted())
     imgur_crawler.get_pictures(configuration.get_number_of_images())
+    my_shared_scr_crawler = MySharedScrCrawler(configuration.should_text_be_extracted())
+    my_shared_scr_crawler.get_pictures(configuration.get_number_of_images())
